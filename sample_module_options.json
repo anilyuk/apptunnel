@@ -1,0 +1,24 @@
+{
+  "https_apps": [
+
+    {"name":"trendmicro-safesync", "url":"www.safesync.com", "cn":"www.safesync.com", "description":"Trendmicro safesync application", "port":"443"},
+    {"name":"ms-update", "url":"update.microsoft.com", "cn":"update.microsoft.com", "description":"SSL Decryption disabled by default", "port":"443"},
+    {"name":"paloalto-updates", "url":"staticupdates.paloaltonetworks.com", "cn":"staticupdates.paloaltonetworks.com", "description":"", "port":"443"},
+    {"name":"skype", "url":"www.skype.com", "cn":"*.skype.com", "description":"", "port":"443"},
+    {"name":"github", "url":"www.github.com", "cn":"*.github.com", "description":"", "port":"443"},
+    {"name":"facebook", "url":"www.facebook.com", "cn":"*.facebook.com", "description":"", "port":"443"},
+    {"name":"play-store", "url":"play.google.com", "cn":"*.play.google.com", "description":"", "port":"443"},
+    {"name":"palalto-wildfire", "url":"wildfire.paloaltonetworks.com", "cn":"wildfire.paloaltonetworks.com", "description":"SSL Decryption disabled by default!", "port":"443"}
+  ],
+
+  "http_apps": [
+    {"name":"github", "url":"github.com", "description":"", "port":"80"},
+    {"name":"facebook", "url":"facebook.com", "description":"", "port":"80"},
+    {"name":"twitter", "url":"twitter.com", "description":"", "port":"80"},
+    {"name":"play-store", "url":"play.google.com", "description":"", "port":"80"},
+    {"name":"symantec-update", "cn":"liveupdate.symantec.com", "description":"", "port":"80"}
+  ]
+
+
+
+}
