@@ -18,6 +18,9 @@ Client; connects to both apptunnel server and target server.
     - proxyip and proxyport parameter is IP address and port of target server and service.
 
 
+![Access internal targer server](logic_flow.jpg)
+
+
 #### Usage: ####
 
     -h, --help            show this help message and exit
