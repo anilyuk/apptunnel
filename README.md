@@ -5,7 +5,7 @@ Apptunnel can mimic every ***HTTP and HTTPS application***.
 HTTPS mode can bypass default settings of ***SSL Inspection*** for several applications.
 
 v1.0 currently allows you to access internal target from internet. 
-Internet access from the internal target mode will be added soon.
+Internet access from the internal target mode will be available soon.
 
 Server; listens for apptunnel connections.
 
