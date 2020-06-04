@@ -1,15 +1,18 @@
 # APPTUNNEL
 
-Apptunnel tool can create application level tunnels to hide traffic. Apptunnel can mimic every HTTP and HTTPS application.
-HTTPS mode can bypass default settings of SSL Inspection for several applications.
+Apptunnel tool can create application level tunnels to hide traffic and needs a ***server***, which is outside the network, and a ***client***.
+Apptunnel can mimic every ***HTTP and HTTPS application***.
+HTTPS mode can bypass default settings of ***SSL Inspection*** for several applications.
 
-v1.0 is currently allow you to access internet from internal network.
+v1.0 currently allows you to access internet from internal network.
 
-Server mode; listens and accepts apptunnel connections.
+Server; listens for apptunnel connections.
+
     - tunnelip and tunnelport parameter is IP address and port to listen.
     - proxyip and proxyport parameter is IP address and port to listen.
 
-Client mode; connects to both apptunnel server and target server.
+Client; connects to both apptunnel server and target server.
+
     - tunnelip and tunnelport parameter is IP address and port of apptunnel server instance.
     - proxyip and proxyport parameter is IP address and port of target server and service.
 
