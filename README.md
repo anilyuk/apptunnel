@@ -7,6 +7,10 @@ HTTPS mode can bypass default settings of ***SSL Inspection*** for several appli
 v1.0 currently allows you to access internal target from internet. 
 Internet access from the internal target mode will be available soon.
 
+
+![Access internal targer server](logic_flow.jpg)
+
+
 Server; listens for apptunnel connections.
 
     - tunnelip and tunnelport parameter is IP address and port to listen.
@@ -16,9 +20,6 @@ Client; connects to both apptunnel server and target server.
 
     - tunnelip and tunnelport parameter is IP address and port of apptunnel server instance.
     - proxyip and proxyport parameter is IP address and port of target server and service.
-
-
-![Access internal targer server](logic_flow.jpg)
 
 
 #### Usage: ####
@@ -42,8 +43,9 @@ Client; connects to both apptunnel server and target server.
     -d, --debug           Enable debug logging
     -s, --silent          Silent mode, logging completely disabled
 
-#### Supported applications/protocols for tunnel traffic ####
-Some sample application configuration can be found at "sample_module_options.json".
+
+#### Sample applications ####
+Some sample application can be found at [sample_module_options.json](sample_module_options.json).
 
 
 
