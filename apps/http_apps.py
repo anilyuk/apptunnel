@@ -52,7 +52,7 @@ class HTTPPacket:
                     session_id = line.split(":")[1].split(",")[1].split("=")[1]
                     packet_id = line.split(":")[1].split(",")[2].split("=")[1]
 
-                except Exception ,e:
+                except Exception as e:
 
                     self.logger.exception("Parse cookie error: {}\n Data: {}".format(str(e), data))
 
@@ -87,7 +87,7 @@ class HTTPPacket:
                             # Create packet object
                             return AppProxyPacket(received_message, int(packet_id), int(session_id), int(connection_id), False, all_payload=original_payload)
 
-                except Exception, e:
+                except Exception as e:
 
                     self.logger.exception("Parse line identifier error: {}".format(str(e)))
 
@@ -163,7 +163,7 @@ class AppProxyMain:
 
             payload_objects = self.parse_payload(payload)
 
-        except Exception, e:
+        except Exception as e:
 
             self.logger.exception("Parse payloads exception: {}".format(str(e)))
 
@@ -206,7 +206,7 @@ class AppProxyMain:
 
             return packet_list
 
-        except Exception, e:
+        except Exception as e:
 
             self.logger.exception("Parse payload exception: {}".format(str(e)))
 
@@ -247,6 +247,7 @@ class AppProxyMain:
             self.session_id = sessionID
 
         self.reset_packet_id()
+        # Decode bytes to string
 
         # Create apptunnel packet from proxy packet
         payloads = self.create_payload_list(payload, self.PACKET_LENGTH, connectionID)
@@ -261,7 +262,7 @@ class AppProxyMain:
 
         packets = []
 
-        for i in xrange(0, len(seq), num):
+        for i in range(0, len(seq), num):
 
             chunk = seq[i:i + num]
 

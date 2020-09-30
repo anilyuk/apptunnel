@@ -9,23 +9,23 @@ from OpenSSL import crypto
 from os.path import join
 from random import uniform
 
-TUNNEL_CONNECTION_RETRY = 5
+TUNNEL_CONNECTION_RETRY = 10
 
 
 # Create proxy thread
-def create_proxy_thread(ip, port, is_client, proxy_queue, proxy_send_queue, name):
+def create_proxy_thread(ip, port, is_client, proxy_queue, proxy_send_queue, name, access_internal=True):
 
     proxy_server = TcpServer(ip, port, is_client, False, proxy_queue,
-                             proxy_send_queue, name)
+                             proxy_send_queue, name, access_internal=access_internal)
 
     proxy_server.daemon = True
     # Create socket
     proxy_server.create_socket()
     # Bind socket
-    proxy_server.bind_server()
 
-    if not is_client:
+    if (not is_client and access_internal) or (is_client and not access_internal):
 
+        proxy_server.bind_server()
         proxy_server.start_listening()
 
     return proxy_server
@@ -33,11 +33,11 @@ def create_proxy_thread(ip, port, is_client, proxy_queue, proxy_send_queue, name
 
 # Create apptunnel thread
 def create_apptunnel_thread(ip, port, is_client, apptunnel_queue, apptunnel_send_queue, name, is_ssl,
-                            certificate_file="", key_file=""):
+                            certificate_file="", key_file="", access_internal=True):
 
     apptunnel_server = TcpServer(ip, port, is_client, True, apptunnel_queue,
                                  apptunnel_send_queue, name,
-                                 use_ssl=is_ssl, certificate_file=certificate_file, key_file=key_file)
+                                 use_ssl=is_ssl, certificate_file=certificate_file, key_file=key_file, access_internal=access_internal)
 
     apptunnel_server.daemon = True
     # Create socket
@@ -65,7 +65,7 @@ def connect_to_apptunnel(logger, apptunnel_server, args):
             apptunnel_server.connect_remote(args.tunnelip, args.tunnelport)
             connection_established = True
 
-        except Exception, e:
+        except Exception as e:
 
             connection_established = False
             logger.debug("{}".format(e))

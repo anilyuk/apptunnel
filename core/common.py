@@ -8,7 +8,7 @@ import logging
 CONNECTION_REMOVE_TIMEOUT = 1200
 CONNECTION_RECEIVE_TIMEOUT = 20
 KEEP_ALIVE_TIME = 20
-VERSION = "1.0"
+VERSION = "1.1"
 BANNER = """
   ____  ____  ____  ______  __ __  ____   ____     ___  _     
  /    ||    \|    \|      ||  |  ||    \ |    \   /  _]| |    

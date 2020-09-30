@@ -17,7 +17,7 @@ REMOVE_CONNECTION_ERROR_COUNT = 20
 class TcpServer(Thread):
 
     def __init__(self, address, port, client, apptunnel, receive_queue, send_queue,
-                 name="Default", use_ssl=False, certificate_file="", key_file=None):
+                 name="Default", use_ssl=False, certificate_file="", key_file=None, access_internal=True):
 
         Thread.__init__(self)
 
@@ -31,6 +31,7 @@ class TcpServer(Thread):
         self.new_socket = None
         self.server_state = True
         self.client = client
+        self.access_internal = access_internal
         self.apptunnel = apptunnel
         self.logger = add_logger("main.servers.{}".format(name))
         self.name = name
@@ -53,9 +54,11 @@ class TcpServer(Thread):
                 for sock in read_sockets:
 
                     # If socket is main socket, accept new connection
-                    if sock is self.new_socket and not self.client:
+                    if sock is self.new_socket and ((not self.client and self.apptunnel) or
+                                                    (not self.apptunnel and self.client and not self.access_internal) or
+                                                    (not self.apptunnel and not self.client and self.access_internal)):
 
-                            self.accept_new_connection()
+                        self.accept_new_connection()
 
                     # If not main socket, receive data
                     elif len(self.connections) > 0:
@@ -81,6 +84,7 @@ class TcpServer(Thread):
                             self.logger.debug("Packet received from {}:{} - Connection ID: {}".format(host, port, connection_id))
                             related_connection.reset_error_count()
                             # Put received data to recive_queue. It will be processed at worker thread.
+
                             self.receive_queue.put((host, port, data, connection_id))
 
                         else:
@@ -168,7 +172,7 @@ class TcpServer(Thread):
             # Accept new connection
             client, address = self.new_socket.accept()
 
-        except Exception, e:
+        except Exception as e:
 
             self.logger.exception("Can't accept connection: {}".format(str(e)))
 
@@ -300,7 +304,7 @@ class SendData(Thread):
                             None
                             #self.logger.debug("Sending data to proxy.")
 
-                    except socket.error,e:
+                    except socket.error as e:
 
                         self.logger.exception("Cant send data removing connection: {}".format(str(e)))
                         # Remove connection
@@ -328,7 +332,7 @@ class SendData(Thread):
                         # Reset keepalive timer
                         self.connections[0].set_keepalive_timer(KEEP_ALIVE_TIME)
 
-                    except socket.error, e:
+                    except socket.error as e:
                         # Remove connection
                         self.connections[0].set_remove_connection(True)
                         self.logger.exception("Socket error: {}".format(str(e)))
@@ -367,6 +371,6 @@ class SendData(Thread):
 
                 logger.debug("All packets send to tunnel")
 
-        except Exception,e:
+        except Exception as e:
 
             logger.debug("Send data error!\n {}".format(e))

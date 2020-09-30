@@ -11,7 +11,7 @@ except:
     use_builtin_base64 = True
 from time import sleep
 from threading import Thread, Event
-from common import add_logger
+from core.common import add_logger
 from core.servers.common import create_session_id
 from core.objects.session import Session
 
@@ -20,7 +20,7 @@ class Workers(Thread):
 
     def __init__(self, proxy_connections, apptunnel_connections,
                  apptunnel_queue, proxy_queue, apptunnel_send_queue, proxy_send_queue,
-                 app_instance, proxy_server_thread, is_client, proxy_ip = None, proxy_port = None):
+                 app_instance, proxy_server_thread, is_client, proxy_ip = None, proxy_port = None, access_internal = True):
 
         Thread.__init__(self)
 
@@ -35,6 +35,7 @@ class Workers(Thread):
         self.app_instance = app_instance
         self.proxy_server_thread = proxy_server_thread
         self.is_client = is_client
+        self.access_internal = access_internal
         self.proxy_ip = proxy_ip
         self.proxy_port = proxy_port
         self.logger = add_logger("main.workers")
@@ -91,7 +92,6 @@ class Workers(Thread):
             self.logger.info("Proxy thread not found!")
         # Parse queue object
         address, port, payload, connection_id = queue_object
-
         # Check if received apptunnel data is ok
         ok = self.app_instance.check_payload(payload)
 
@@ -137,7 +137,7 @@ class Workers(Thread):
                             break
 
                 # If new connection, create connection object and connect to proxy
-                if is_new_connection and self.is_client:
+                if is_new_connection and ((self.is_client and self.access_internal) or (not self.is_client and not self.access_internal)):
 
                     self.logger.info("Connecting to proxy server {}:{} for ConnectionID: {}".format(self.proxy_ip, self.proxy_port, parsed_payload.get_connection_id()))
 
@@ -175,7 +175,7 @@ class Workers(Thread):
                                     decoded_payload = b64decode(sorted_payload, validate=True, altchars=None) \
                                         if not use_builtin_base64 else b64decode(sorted_payload)
 
-                                except Exception, e:
+                                except Exception as e:
 
                                     self.logger.exception("Problem with base64 decoded string: {}".format(str(sorted_payload)))
 
@@ -204,7 +204,7 @@ class Workers(Thread):
                             # Add payload to session
                             new_session.add_apptunnel_payload(parsed_payload)
 
-                        except Exception, e:
+                        except Exception as e:
 
                             self.logger.exception("Problem: {}".format(str(e)))
 

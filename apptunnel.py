@@ -19,15 +19,22 @@ def arg_parser():
 Apptunnel tool can create application level tunnels to hide traffic. Apptunnel can mimic every HTTP and HTTPS application.
 HTTPS mode can bypass default settings of SSL Inspection for several applications. 
 
-Server mode; listens and accepts apptunnel connections.
-    - tunnelip and tunnelport parameter is IP address and port to listen.
-    - proxyip and proxyport parameter is IP address and port to listen.
-    
-Client mode; connects to both apptunnel server and target server.
-    - tunnelip and tunnelport parameter is IP address and port of apptunnel server instance.
-    - proxyip and proxyport parameter is IP address and port of target server and service.
+Access modes; 
+    - Access internal: Access internal network from internet.
+    - Access internet: Access internet from internal network
+
+Server; listens and accepts apptunnel connections. This must be located at internet.
+    - tunnelip and tunnelport parameters are IP address and port to listen as apptunnel server.
+    - proxyip and proxyport parameters are IP address and port to listen or connect.
+
+Client; connects to both apptunnel server and target server. This is the bastion host at internal network
+    - tunnelip and tunnelport parameters are IP address and port of apptunnel server instance.
+    - proxyip and proxyport parameters are IP address and port to listen or connect.
     """
     parser = ArgumentParser(formatter_class=RawTextHelpFormatter, description=description)
+
+    parser.add_argument("-ai", "--access_internal", action="store_true", default=False,
+                        help="Access internal network from internet. \nDefault: Access to internet from internal network.")
 
     parser.add_argument("-c", "--client", action="store_true", default=False,
                         help="Run as client")
@@ -62,7 +69,7 @@ Client mode; connects to both apptunnel server and target server.
         #Check user arguments
         check_user_arguments(args)
 
-    except Exception, e:
+    except Exception as e:
 
         parser.print_help()
         print("\n\n{}\n".format(e))
@@ -76,7 +83,7 @@ def main(args):
 
         # Print banner
         if not args.silent:
-            print "{}\n".format(BANNER)
+            print("{}\n".format(BANNER))
 
         # Start logger
         logger = start_logger("main", args.silent, debuglevel=args.debug)
@@ -96,7 +103,7 @@ def main(args):
             exit()
             return
 
-        except Exception, e:
+        except Exception as e:
 
             logger.exception("Module error {}".format(str(e)))
             exit()
@@ -123,7 +130,7 @@ def main(args):
             # Create Apptunnel thread as client
             apptunnel_server = create_apptunnel_thread(ip="0.0.0.0", port=0, is_client=args.client, apptunnel_queue=apptunnel_queue,
                                                        apptunnel_send_queue=apptunnel_send_queue,
-                                                       name="ApptunnelClient",is_ssl=args.ssl)
+                                                       name="ApptunnelClient",is_ssl=args.ssl, access_internal=args.access_internal)
 
             # Try to connect to apptunnel server and if there is a problem, try every N seconds.
             connect_to_apptunnel(logger, apptunnel_server, args)
@@ -135,13 +142,17 @@ def main(args):
 
             # Create proxy server thread
             # This thread will accept connections and receive packets.
-            proxy_server = create_proxy_thread(ip="0.0.0.0", port=0, is_client=args.client, proxy_queue=proxy_queue,
-                                               proxy_send_queue=proxy_send_queue, name="ProxyThreadClient")
+            proxy_server = create_proxy_thread(ip=args.proxyip, port=int(args.proxyport), is_client=args.client, proxy_queue=proxy_queue,
+                                               proxy_send_queue=proxy_send_queue, name="ProxyThreadClient", access_internal=args.access_internal)
 
             logger.info("Proxy server started!")
-            logger.info("Connect to {}:{} after a packet received from apptunnel".format(args.proxyip, args.proxyport))
-            # Start proxy server thread
+            if args.access_internal:
+                logger.info("Connect to {}:{} after a packet received from apptunnel".format(args.proxyip, args.proxyport))
+            else:
+                logger.info("Waiting proxy connection from TCP/{}".format(args.proxyport))
+                proxy_server.start()
 
+            # Start proxy server thread
 
             threads.append(proxy_server)
 
@@ -153,7 +164,7 @@ def main(args):
             # This thread will accept and process packets and send it to apptunnel or proxy threads via send queues
             worker_thread = Workers(proxy_connection_list, apptunnel_connection_list, apptunnel_queue, proxy_queue,
                                     apptunnel_send_queue, proxy_send_queue, appmodule_main, proxy_server,
-                                    args.client, args.proxyip, args.proxyport)
+                                    args.client, args.proxyip, args.proxyport, access_internal=args.access_internal)
 
             worker_thread.daemon = True
             worker_thread.start()
@@ -166,13 +177,17 @@ def main(args):
             # The connection from proxy server will be forwarded through apptunnel connection
 
             # Create proxy server thread
-            proxy_server = create_proxy_thread(ip="127.0.0.1", port=int(args.proxyport), is_client=args.client, proxy_queue=proxy_queue,
+            proxy_server = create_proxy_thread(ip=args.proxyip, port=int(args.proxyport), is_client=args.client, proxy_queue=proxy_queue,
                                                proxy_send_queue=proxy_send_queue,
-                                               name="ProxyThread")
+                                               name="ProxyThread", access_internal=args.access_internal)
 
             logger.info("Proxy server started!")
-            logger.info("Waiting proxy connection from TCP/{}".format(args.proxyport))
-            proxy_server.start()
+            if not args.access_internal:
+                logger.info(
+                    "Connect to {}:{} after a packet received from apptunnel".format(args.proxyip, args.proxyport))
+            else:
+                logger.info("Waiting proxy connection from TCP/{}".format(args.proxyport))
+                proxy_server.start()
             threads.append(proxy_server)
 
             key_file = ""
@@ -189,7 +204,8 @@ def main(args):
             apptunnel_server = create_apptunnel_thread(ip="0.0.0.0", port=int(args.tunnelport), is_client=args.client,
                                                        apptunnel_queue=apptunnel_queue,
                                                        apptunnel_send_queue=apptunnel_send_queue,
-                                                       name="ApptunnelServer", is_ssl=args.ssl, certificate_file=certificate_file, key_file=key_file)
+                                                       name="ApptunnelServer", is_ssl=args.ssl,
+                                                       certificate_file=certificate_file, key_file=key_file, access_internal=args.access_internal)
 
             logger.info("App tunnel server started!")
             logger.info("Waiting app tunnel connection from TCP/{}".format(args.tunnelport))
@@ -204,7 +220,9 @@ def main(args):
             # Create worker thread
             # This thread will accept packets and send it via apptunnel or proxy threads
             worker_thread = Workers(proxy_connection_list, apptunnel_connection_list, apptunnel_queue, proxy_queue,
-                                    apptunnel_send_queue, proxy_send_queue, appmodule_main, proxy_server, is_client=args.client)
+                                    apptunnel_send_queue, proxy_send_queue, appmodule_main, proxy_server,
+                                    is_client=args.client, proxy_ip=args.proxyip, proxy_port=args.proxyport,
+                                    access_internal=args.access_internal)
 
             worker_thread.daemon = True
             worker_thread.start()
@@ -248,13 +266,12 @@ def main(args):
                 logger.debug("Starting proxy sender thread.")
                 send_proxy_thread.start()
 
-                if args.client:
+                if (args.client and args.access_internal) or (not args.client and not args.access_internal):
                     proxy_server.start()
 
             elif len(apptunnel_connection_list) == 0 and args.client:
 
-                # Try to connect to apptunnel server and if there is a problem, try every N seconds.
-
+                # Try to connect to apptunnel server and if there is a problem, try every 10 seconds.
                 connect_to_apptunnel(logger, apptunnel_server, args)
                 worker_thread.set_apptunnel_connection_list(apptunnel_server.get_connection_list())
                 apptunnel_connection_list = apptunnel_server.get_connection_list()
@@ -270,7 +287,7 @@ def main(args):
 
         logger.exception("Socket error:\n{}".format(err))
 
-    except Exception, e:
+    except Exception as e:
 
         logger.exception("Unknown error:\n{}".format(str(e)))
 
