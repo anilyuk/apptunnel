@@ -9,11 +9,9 @@ Change Log:
 - v1.0: Apptunnel is currently allow you to access internet from internal network.
 
 Access modes; 
+
     - Access internal: Access internal network from internet.
     - Access internet: Access internet from internal network
-
-![Access internal targer server](logic_flow.jpg)
-
 
 Server; listens for apptunnel connections.
 
@@ -24,6 +22,10 @@ Client; connects to both apptunnel server and target server.
 
     - tunnelip and tunnelport parameters are IP address and port of apptunnel server instance.
     - proxyip and proxyport parameters are IP address and port to listen or connect.
+    
+
+Flow of accessing internet from internal network;
+![Access internal targer server](logic_flow.jpg)
 
 
 #### Usage: ####
